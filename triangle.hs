@@ -2,17 +2,24 @@ import Control.Monad (unless, when)
 --import Control.Monad.IO.Class (liftIO)
 import Data.Maybe (fromJust)
 import qualified Graphics.Rendering.OpenGL as GL
+import Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.UI.GLFW as GLFW
 
 main :: IO ()
 main = do
-  withWindow 640 480 "empty" $ \win -> do
+  withWindow 640 480 "triangle" $ \win -> do
     putStrLn "have a window"
     GLFW.swapInterval 1
     GLFW.setKeyCallback win $ Just keyCb
     GLFW.setWindowCloseCallback win $ Just winCloseCb
 
-    run win render
+    -- init gl
+    vao <- GL.get GL.bindVertexArrayObject
+    vtxBuf <- GL.get $ GL.bindBuffer GL.ArrayBuffer
+    bufData <- GL.get $ GL.bufferData GL.ArrayBuffer
+    -- bufData $= ()
+
+    run win $ render win $ fromJust vtxBuf
 
   putStrLn "exiting"
 
@@ -44,17 +51,17 @@ keyCb win key scan st mods = do
 winCloseCb :: GLFW.WindowCloseCallback
 winCloseCb win = GLFW.setWindowShouldClose win True
 
-run :: GLFW.Window -> (GLFW.Window -> IO ()) -> IO ()
+run :: GLFW.Window -> IO () -> IO ()
 run win render = do
   GLFW.swapBuffers win
   GL.flush
   GLFW.pollEvents
 
-  render win
+  render
 
   q <- GLFW.windowShouldClose win
   unless q $ run win render
 
-render :: GLFW.Window -> IO ()
-render win = do
+render :: GLFW.Window -> GL.BufferObject -> IO ()
+render win vtxBuf = do
   return ()

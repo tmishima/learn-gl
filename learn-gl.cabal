@@ -8,8 +8,15 @@ cabal-version: >= 1.10
 build-type: Simple
 
 executable empty
-  default-language: Haskell2010
   main-is: empty.hs
+  ghc-options: -Wall
+  build-depends:
+    OpenGL >= 2.8,
+    GLFW-b >= 1.3,
+    base < 5
+
+executable triangle
+  main-is: triangle.hs
   ghc-options: -Wall
   build-depends:
     OpenGL >= 2.8,
