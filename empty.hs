@@ -1,6 +1,6 @@
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
-import Control.Monad (when)
+import Control.Monad (unless, when)
 
 main :: IO ()
 main = do
@@ -29,10 +29,11 @@ withWindow w h t f = do
   where errorCb e s = putStrLn $ unwords [show e, show s]
 
 keyCb :: GLFW.KeyCallback
---Window -> Key -> Int -> KeyState -> ModifierKeys          -> IO ()
 keyCb win key scan st mods = do
   case key of
-    GLFW.Key'Escape -> putStrLn "exiting"
+    GLFW.Key'Escape -> do
+      putStrLn "exiting"
+      GLFW.setWindowShouldClose win True
     _ -> return ()
 
 run :: GLFW.Window -> IO ()
@@ -41,4 +42,5 @@ run win = do
   GL.flush
   GLFW.pollEvents
 
-  run win
+  q <- GLFW.windowShouldClose win
+  unless q $ run win
