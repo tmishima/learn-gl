@@ -1,6 +1,4 @@
 import Control.Monad (unless, when)
---import Control.Monad.IO.Class (liftIO)
-import Data.Maybe (fromJust)
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
 
@@ -35,7 +33,8 @@ withWindow w h t f = do
   where errorCb e s = putStrLn $ unwords [show e, show s]
 
 keyCb :: GLFW.KeyCallback
-keyCb win key scan st mods = do
+--keyCb win key scan st mods
+keyCb win key _ st _ = do
   case (key, st) of
     (GLFW.Key'Escape, GLFW.KeyState'Pressed) ->
       GLFW.setWindowShouldClose win True
@@ -45,16 +44,16 @@ winCloseCb :: GLFW.WindowCloseCallback
 winCloseCb win = GLFW.setWindowShouldClose win True
 
 run :: GLFW.Window -> (GLFW.Window -> IO ()) -> IO ()
-run win render = do
+run win draw = do
   GLFW.swapBuffers win
   GL.flush
   GLFW.pollEvents
 
-  render win
+  draw win
 
   q <- GLFW.windowShouldClose win
-  unless q $ run win render
+  unless q $ run win draw
 
 render :: GLFW.Window -> IO ()
-render win = do
+render _ = do
   return ()

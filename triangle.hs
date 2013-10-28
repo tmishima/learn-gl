@@ -2,7 +2,6 @@ import Control.Monad (unless, when)
 --import Control.Monad.IO.Class (liftIO)
 import Data.Array.Storable
 import qualified Data.ByteString as BS
-import Data.Maybe (fromJust)
 import Foreign.Ptr (nullPtr)
 import qualified Graphics.Rendering.OpenGL as GL
 import Graphics.Rendering.OpenGL (($=))
@@ -18,7 +17,7 @@ main = do
 
     -- init gl
     GL.clearColor $= GL.Color4 0.5 0.5 0.5 1
-    vao <- GL.get GL.bindVertexArrayObject
+    _ <- GL.get GL.bindVertexArrayObject
     tri <- listToVbo triangle
     wht <- listToVbo white
 
@@ -88,18 +87,18 @@ winCloseCb :: GLFW.WindowCloseCallback
 winCloseCb win = GLFW.setWindowShouldClose win True
 
 run :: GLFW.Window -> IO () -> IO ()
-run win render = do
+run win draw = do
   GLFW.swapBuffers win
   GL.flush
   GLFW.pollEvents
 
-  render
+  draw
 
   q <- GLFW.windowShouldClose win
-  unless q $ run win render
+  unless q $ run win draw
 
 render :: GLFW.Window -> GL.BufferObject -> GL.BufferObject -> IO ()
-render win vtxs _ = do
+render _ vtxs _ = do
   GL.clear [GL.ColorBuffer, GL.DepthBuffer]
   GL.clientState GL.VertexArray $= GL.Enabled
 
@@ -109,7 +108,7 @@ render win vtxs _ = do
   --GL.bindBuffer GL.ArrayBuffer $= Just color
   --GL.arrayPointer GL.ColorArray $= (GL.VertexArrayDescriptor 4 GL.Float 0 nullPtr)
 
-  GL.drawArrays GL.Triangles 0 $ fromIntegral 3
+  GL.drawArrays GL.Triangles 0 $ fromIntegral (3::Int)
   --GL.bindBuffer GL.ArrayBuffer $= Nothing
   --GL.clientState GL.VertexArray $= GL.Disabled
   --return ()
