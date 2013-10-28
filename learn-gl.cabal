@@ -3,7 +3,6 @@ version: 0.0.1
 
 author: Matthew O'Connor <thegreendragon@gmail.com>
 
-
 cabal-version: >= 1.10
 build-type: Simple
 
