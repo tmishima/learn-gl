@@ -1,6 +1,8 @@
 import Control.Monad (unless, when)
 --import Control.Monad.IO.Class (liftIO)
+import Data.Array.Storable
 import Data.Maybe (fromJust)
+import Foreign.Ptr (nullPtr)
 import qualified Graphics.Rendering.OpenGL as GL
 import Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.UI.GLFW as GLFW
@@ -15,11 +17,9 @@ main = do
 
     -- init gl
     vao <- GL.get GL.bindVertexArrayObject
-    vtxBuf <- GL.get $ GL.bindBuffer GL.ArrayBuffer
-    bufData <- GL.get $ GL.bufferData GL.ArrayBuffer
-    -- bufData $= ()
+    tri <- listToVbo triangle
 
-    run win $ render win $ fromJust vtxBuf
+    run win $ render win tri
 
   putStrLn "exiting"
 
@@ -42,7 +42,8 @@ withWindow w h t f = do
   where errorCb e s = putStrLn $ unwords [show e, show s]
 
 keyCb :: GLFW.KeyCallback
-keyCb win key scan st mods = do
+--keyCb win key scan st mods = do
+keyCb win key _ st _ = do
   case (key, st) of
     (GLFW.Key'Escape, GLFW.KeyState'Pressed) ->
       GLFW.setWindowShouldClose win True
@@ -64,4 +65,28 @@ run win render = do
 
 render :: GLFW.Window -> GL.BufferObject -> IO ()
 render win vtxBuf = do
+  GL.clientState GL.VertexArray $= GL.Enabled
+  GL.bindBuffer GL.ArrayBuffer $= Just vtxBuf
+  GL.arrayPointer GL.VertexArray $= (GL.VertexArrayDescriptor 3 GL.Float 0 nullPtr)
+  GL.drawArrays GL.Triangles 0 $ fromIntegral 3
+  GL.bindBuffer GL.ArrayBuffer $= Nothing
+  GL.clientState GL.VertexArray $= GL.Disabled
   return ()
+
+listToVbo :: [GL.GLfloat] -> IO GL.BufferObject
+listToVbo xs = do
+  let len = length xs
+      ptrsize = toEnum $ len * 4
+  [array] <- GL.genObjectNames 1
+  GL.bindBuffer GL.ArrayBuffer $= Just array
+  arr <- newListArray (0, len - 1) xs
+  withStorableArray arr $ \ptr ->
+    GL.bufferData GL.ArrayBuffer $= (ptrsize, ptr, GL.StaticDraw)
+  GL.bindBuffer GL.ArrayBuffer $= Nothing
+  return array
+
+triangle :: [GL.GLfloat]
+triangle = [
+  -1.0, -1.0,  0.0,
+   1.0, -1.0,  0.0,
+   0.0,  1.0,  0.0]
