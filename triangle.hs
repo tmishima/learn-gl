@@ -16,6 +16,7 @@ main = do
     GLFW.setWindowCloseCallback win $ Just winCloseCb
 
     -- init gl
+    GL.clearColor GL.$= GL.Color4 0.5 0.5 0.5 1
     vao <- GL.get GL.bindVertexArrayObject
     tri <- listToVbo triangle
 
@@ -65,6 +66,7 @@ run win render = do
 
 render :: GLFW.Window -> GL.BufferObject -> IO ()
 render win vtxBuf = do
+  GL.clear [GL.ColorBuffer, GL.DepthBuffer]
   GL.clientState GL.VertexArray $= GL.Enabled
   GL.bindBuffer GL.ArrayBuffer $= Just vtxBuf
   GL.arrayPointer GL.VertexArray $= (GL.VertexArrayDescriptor 3 GL.Float 0 nullPtr)
