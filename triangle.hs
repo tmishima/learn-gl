@@ -99,7 +99,7 @@ run win render = do
   unless q $ run win render
 
 render :: GLFW.Window -> GL.BufferObject -> GL.BufferObject -> IO ()
-render win vtxs color = do
+render win vtxs _ = do
   GL.clear [GL.ColorBuffer, GL.DepthBuffer]
   GL.clientState GL.VertexArray $= GL.Enabled
 

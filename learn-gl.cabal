@@ -8,6 +8,7 @@ cabal-version: >= 1.10
 build-type: Simple
 
 executable empty
+  default-language: Haskell2010
   main-is: empty.hs
   ghc-options: -Wall
   build-depends:
@@ -16,6 +17,7 @@ executable empty
     base < 5
 
 executable triangle
+  default-language: Haskell2010
   main-is: triangle.hs
   ghc-options: -Wall
   build-depends:
