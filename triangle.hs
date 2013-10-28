@@ -66,7 +66,7 @@ withWindow w h t f = do
   when r $ do
     GLFW.windowHint $ GLFW.WindowHint'Resizable False
     GLFW.windowHint $ GLFW.WindowHint'ContextVersionMajor 3
-    GLFW.windowHint $ GLFW.WindowHint'ContextVersionMinor 3
+    --GLFW.windowHint $ GLFW.WindowHint'ContextVersionMinor 3
     m <- GLFW.createWindow w h t Nothing Nothing
     case m of
       (Just win) -> do
