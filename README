@@ -1,0 +1,10 @@
+Attempt to learn how to program OpenGL with Shaders in Haskell.
+
+  * empty.hs - an empty window created with GLFW
+  * triangle.hs - an attempt to render a single triangle using shaders
+
+Resources
+
+  * http://www.opengl-tutorial.org/beginners-tutorials/tutorial-2-the-first-triangle/
+  * http://zach.in.tu-clausthal.de/teaching/cg_literatur/glsl_tutorial/
+  * https://github.com/scan/Colin/blob/vbo/src/Colin/Sprite.hs

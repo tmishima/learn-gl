@@ -49,6 +49,7 @@ main = do
     GL.attachShader p v
     GL.attachShader p f
     GL.linkProgram p
+    GL.validateProgram p
     GL.currentProgram GL.$= Just p
     pLog <- GL.get $ GL.programInfoLog p
     putStrLn pLog
@@ -103,15 +104,15 @@ render win vtxs color = do
   GL.clientState GL.VertexArray $= GL.Enabled
 
   GL.bindBuffer GL.ArrayBuffer $= Just vtxs
-  GL.arrayPointer GL.VertexArray $= (GL.VertexArrayDescriptor 3 GL.Float 0 nullPtr)
+  GL.arrayPointer GL.VertexArray $= (GL.VertexArrayDescriptor 3 GL.Float 3 nullPtr)
 
   --GL.bindBuffer GL.ArrayBuffer $= Just color
   --GL.arrayPointer GL.ColorArray $= (GL.VertexArrayDescriptor 4 GL.Float 0 nullPtr)
 
   GL.drawArrays GL.Triangles 0 $ fromIntegral 3
   GL.bindBuffer GL.ArrayBuffer $= Nothing
-  GL.clientState GL.VertexArray $= GL.Disabled
-  return ()
+  --GL.clientState GL.VertexArray $= GL.Disabled
+  --return ()
 
 listToVbo :: [GL.GLfloat] -> IO GL.BufferObject
 listToVbo xs = do
@@ -122,7 +123,7 @@ listToVbo xs = do
   arr <- newListArray (0, len - 1) xs
   withStorableArray arr $ \ptr ->
     GL.bufferData GL.ArrayBuffer $= (ptrsize, ptr, GL.StaticDraw)
-  GL.bindBuffer GL.ArrayBuffer $= Nothing
+  --GL.bindBuffer GL.ArrayBuffer $= Nothing
   return array
 
 triangle, white :: [GL.GLfloat]
