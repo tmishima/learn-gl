@@ -11,7 +11,7 @@ executable empty
   main-is: empty.hs
   ghc-options: -Wall
   build-depends:
-    OpenGL >= 2.8,
+    OpenGL >= 2.9,
     GLFW-b >= 1.3,
     base < 5
 
@@ -19,7 +19,8 @@ executable triangle
   main-is: triangle.hs
   ghc-options: -Wall
   build-depends:
-    OpenGL >= 2.8,
+    OpenGL >= 2.9,
     GLFW-b >= 1.3,
     base < 5,
-    array  >= 0.4
+    array >= 0.4,
+    bytestring >= 0.10
