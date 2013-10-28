@@ -18,8 +18,6 @@ main = do
     -- init gl
     GL.clearColor $= GL.Color4 0.5 0.5 0.5 1
     _ <- GL.get GL.bindVertexArrayObject
-    tri <- listToVbo triangle
-    wht <- listToVbo white
 
     --GL.position (GL.Light 0) GL.$= GL.Vertex4 5 5 10 0
     --GL.light    (GL.Light 0) GL.$= GL.Enabled
@@ -52,6 +50,10 @@ main = do
     GL.currentProgram GL.$= Just p
     pLog <- GL.get $ GL.programInfoLog p
     putStrLn pLog
+
+    -- load objects
+    tri <- listToVbo triangle
+    wht <- listToVbo white
 
     run win $ render win tri wht
 
@@ -92,24 +94,24 @@ run win draw = do
   GL.flush
   GLFW.pollEvents
 
+  GL.clear [GL.ColorBuffer, GL.DepthBuffer]
   draw
 
   q <- GLFW.windowShouldClose win
   unless q $ run win draw
 
 render :: GLFW.Window -> GL.BufferObject -> GL.BufferObject -> IO ()
-render _ vtxs _ = do
-  GL.clear [GL.ColorBuffer, GL.DepthBuffer]
+render _ vtxs color = do
   GL.clientState GL.VertexArray $= GL.Enabled
 
   GL.bindBuffer GL.ArrayBuffer $= Just vtxs
   GL.arrayPointer GL.VertexArray $= (GL.VertexArrayDescriptor 3 GL.Float 0 nullPtr)
 
-  --GL.bindBuffer GL.ArrayBuffer $= Just color
-  --GL.arrayPointer GL.ColorArray $= (GL.VertexArrayDescriptor 4 GL.Float 0 nullPtr)
+  GL.bindBuffer GL.ArrayBuffer $= Just color
+  GL.arrayPointer GL.ColorArray $= (GL.VertexArrayDescriptor 4 GL.Float 0 nullPtr)
 
   GL.drawArrays GL.Triangles 0 $ fromIntegral (3::Int)
-  --GL.bindBuffer GL.ArrayBuffer $= Nothing
+  GL.bindBuffer GL.ArrayBuffer $= Nothing
   --GL.clientState GL.VertexArray $= GL.Disabled
   --return ()
 
@@ -122,7 +124,7 @@ listToVbo xs = do
   arr <- newListArray (0, len - 1) xs
   withStorableArray arr $ \ptr ->
     GL.bufferData GL.ArrayBuffer $= (ptrsize, ptr, GL.StaticDraw)
-  --GL.bindBuffer GL.ArrayBuffer $= Nothing
+  GL.bindBuffer GL.ArrayBuffer $= Nothing
   return array
 
 triangle, white :: [GL.GLfloat]
