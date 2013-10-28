@@ -104,13 +104,13 @@ render win vtxs color = do
   GL.clientState GL.VertexArray $= GL.Enabled
 
   GL.bindBuffer GL.ArrayBuffer $= Just vtxs
-  GL.arrayPointer GL.VertexArray $= (GL.VertexArrayDescriptor 3 GL.Float 3 nullPtr)
+  GL.arrayPointer GL.VertexArray $= (GL.VertexArrayDescriptor 3 GL.Float 0 nullPtr)
 
   --GL.bindBuffer GL.ArrayBuffer $= Just color
   --GL.arrayPointer GL.ColorArray $= (GL.VertexArrayDescriptor 4 GL.Float 0 nullPtr)
 
   GL.drawArrays GL.Triangles 0 $ fromIntegral 3
-  GL.bindBuffer GL.ArrayBuffer $= Nothing
+  --GL.bindBuffer GL.ArrayBuffer $= Nothing
   --GL.clientState GL.VertexArray $= GL.Disabled
   --return ()
 
