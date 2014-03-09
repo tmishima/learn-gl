@@ -1,8 +1,12 @@
-#version 330 core
-// layout(location = 0) in vec3 vertexPosition_modelspace;
+#version 130
+in vec3 VertexPosition;
+in vec4 VertexColor;
+
+out vec4 Color;
 
 void main() {
-  gl_Position = ftransform(); // vertexPosition_modelspace;
+  Color = VertexColor;  
+  gl_Position = vec4(VertexPosition,1.0);
 //   // gl_Position.w = 1.0;
 }
 

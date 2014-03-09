@@ -1,11 +1,9 @@
 import Control.Monad (unless, when)
 --import Control.Monad.IO.Class (liftIO)
-import Data.Array.Storable
-import qualified Data.ByteString as BS
 import Foreign.Ptr (nullPtr)
-import qualified Graphics.Rendering.OpenGL as GL
-import Graphics.Rendering.OpenGL (($=))
+import Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLFW as GLFW
+import Graphics.GLUtil
 
 main :: IO ()
 main = do
@@ -17,7 +15,6 @@ main = do
 
     -- init gl
     GL.clearColor $= GL.Color4 0.5 0.5 0.5 1
-    _ <- GL.get GL.bindVertexArrayObject
 
     --GL.position (GL.Light 0) GL.$= GL.Vertex4 5 5 10 0
     --GL.light    (GL.Light 0) GL.$= GL.Enabled
@@ -28,34 +25,25 @@ main = do
     --GL.normalize  GL.$= GL.Enabled
 
     -- init shaders
-    v <- GL.createShader GL.VertexShader
-    vSrc <- BS.readFile "simple.vert"
-    GL.shaderSourceBS v $= vSrc
-    GL.compileShader v
-    vStat <- GL.get $ GL.shaderInfoLog v
-    putStrLn $ vStat
+    sp <- simpleShaderProgramWith "simple.vert" "simple.frag" $ \ p -> do
+      attribLocation p "VertexPosition" $= AttribLocation 0
+      bindFragDataLocation p "FragColor" $= 0
 
-    f <- GL.createShader GL.FragmentShader
-    fSrc <- BS.readFile "simple.frag"
-    GL.shaderSourceBS f $= fSrc
-    GL.compileShader f
-    fStat <- GL.get $ GL.shaderInfoLog f
-    putStrLn $ fStat
-
-    p <- GL.createProgram
-    GL.attachShader p v
-    GL.attachShader p f
-    GL.linkProgram p
-    GL.validateProgram p
-    GL.currentProgram GL.$= Just p
-    pLog <- GL.get $ GL.programInfoLog p
+    GL.currentProgram GL.$= Just (program sp)
+    pLog <- GL.get $ GL.programInfoLog (program sp)
     putStrLn pLog
 
     -- load objects
-    tri <- listToVbo triangle
-    wht <- listToVbo white
+    vao <- makeVAO $ do
+      makeBuffer ArrayBuffer triangle
+      enableAttrib sp "VertexPosition"
+      setAttrib sp "VertexPosition" ToFloat (VertexArrayDescriptor 3 Float 0 offset0)
+      makeBuffer ArrayBuffer white
+      enableAttrib sp "VertexColor"
+      setAttrib sp "VertexColor" ToFloat (VertexArrayDescriptor 4 Float 0 offset0)
+      return ()
 
-    run win $ render win tri wht
+    run win $ render win vao
 
   putStrLn "exiting"
 
@@ -100,32 +88,14 @@ run win draw = do
   q <- GLFW.windowShouldClose win
   unless q $ run win draw
 
-render :: GLFW.Window -> GL.BufferObject -> GL.BufferObject -> IO ()
-render _ vtxs color = do
+render :: GLFW.Window -> GL.VertexArrayObject -> IO ()
+render _ vao = do
   GL.clientState GL.VertexArray $= GL.Enabled
 
-  GL.bindBuffer GL.ArrayBuffer $= Just vtxs
-  GL.arrayPointer GL.VertexArray $= (GL.VertexArrayDescriptor 3 GL.Float 0 nullPtr)
+  withVAO vao $ do
+    GL.drawArrays GL.Triangles 0 $ fromIntegral (3::Int)
 
-  GL.bindBuffer GL.ArrayBuffer $= Just color
-  GL.arrayPointer GL.ColorArray $= (GL.VertexArrayDescriptor 4 GL.Float 0 nullPtr)
-
-  GL.drawArrays GL.Triangles 0 $ fromIntegral (3::Int)
-  GL.bindBuffer GL.ArrayBuffer $= Nothing
-  --GL.clientState GL.VertexArray $= GL.Disabled
   --return ()
-
-listToVbo :: [GL.GLfloat] -> IO GL.BufferObject
-listToVbo xs = do
-  let len = length xs
-      ptrsize = toEnum $ len * 4 -- so ugly...
-  [array] <- GL.genObjectNames 1
-  GL.bindBuffer GL.ArrayBuffer $= Just array
-  arr <- newListArray (0, len - 1) xs
-  withStorableArray arr $ \ptr ->
-    GL.bufferData GL.ArrayBuffer $= (ptrsize, ptr, GL.StaticDraw)
-  GL.bindBuffer GL.ArrayBuffer $= Nothing
-  return array
 
 triangle, white :: [GL.GLfloat]
 white = [
