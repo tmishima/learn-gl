@@ -104,13 +104,13 @@ render _ shprg tvao qvao = do
   GL.currentProgram GL.$= Just (program shprg)
   GL.clientState GL.VertexArray $= GL.Enabled
 
-  setUniform shprg "TransMat" $ Vertex3 1 0 (0 :: GLfloat)
-  withVAO tvao $ do
-    GL.drawArrays GL.Triangles 0 $ fromIntegral (3::Int)
-
   let vUnifLoc = getUniform shprg "ViewMat"
   uniformMat vUnifLoc $= [[0.5,0,0,0],[0,0.5,0,0] ,[0,0,0.5,0],[0,0,0,1]]
   --asUniform vUnifLoc -- camMatrix camera2D
+
+  setUniform shprg "TransMat" $ Vertex3 1 0 (0 :: GLfloat)
+  withVAO tvao $ do
+    GL.drawArrays GL.Triangles 0 $ fromIntegral (3::Int)
   
   setUniform shprg "TransMat" $ Vertex3 (-1) 0 (0 :: GLfloat)
   withVAO qvao $ do
