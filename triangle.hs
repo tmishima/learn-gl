@@ -34,16 +34,26 @@ main = do
     putStrLn pLog
 
     -- load objects
-    vao <- makeVAO $ do
+    tvao <- makeVAO $ do
       makeBuffer ArrayBuffer triangle
       enableAttrib sp "VertexPosition"
       setAttrib sp "VertexPosition" ToFloat (VertexArrayDescriptor 3 Float 0 offset0)
-      makeBuffer ArrayBuffer white
+      makeBuffer ArrayBuffer triColor 
       enableAttrib sp "VertexColor"
       setAttrib sp "VertexColor" ToFloat (VertexArrayDescriptor 4 Float 0 offset0)
       return ()
 
-    run win $ render win vao
+    qvao <- makeVAO $ do
+      makeBuffer ArrayBuffer quads
+      enableAttrib sp "VertexPosition"
+      setAttrib sp "VertexPosition" ToFloat (VertexArrayDescriptor 3 Float 0 offset0)
+      makeBuffer ArrayBuffer qColor 
+      enableAttrib sp "VertexColor"
+      setAttrib sp "VertexColor" ToFloat (VertexArrayDescriptor 4 Float 0 offset0)
+      return ()
+    GL.currentProgram GL.$= Nothing
+
+    run win $ render win sp tvao qvao
 
   putStrLn "exiting"
 
@@ -88,21 +98,45 @@ run win draw = do
   q <- GLFW.windowShouldClose win
   unless q $ run win draw
 
-render :: GLFW.Window -> GL.VertexArrayObject -> IO ()
-render _ vao = do
+render :: GLFW.Window -> ShaderProgram -> GL.VertexArrayObject -> GL.VertexArrayObject -> IO ()
+render _ shprg tvao qvao = do
+
+  GL.currentProgram GL.$= Just (program shprg)
   GL.clientState GL.VertexArray $= GL.Enabled
 
-  withVAO vao $ do
+  setUniform shprg "TransMat" $ Vertex3 1 0 (0 :: GLfloat)
+  withVAO tvao $ do
     GL.drawArrays GL.Triangles 0 $ fromIntegral (3::Int)
 
+  let vUnifLoc = getUniform shprg "ViewMat"
+  uniformMat vUnifLoc $= [[0.5,0,0,0],[0,0.5,0,0] ,[0,0,0.5,0],[0,0,0,1]]
+  --asUniform vUnifLoc -- camMatrix camera2D
+  
+  setUniform shprg "TransMat" $ Vertex3 (-1) 0 (0 :: GLfloat)
+  withVAO qvao $ do
+    GL.drawArrays GL.Quads 0 $ fromIntegral (4::Int)
+
+  GL.currentProgram GL.$= Nothing
   --return ()
 
-triangle, white :: [GL.GLfloat]
-white = [
-  1.0, 1.0, 1.0, 1.0,
-  1.0, 1.0, 1.0, 1.0,
-  1.0, 1.0, 1.0, 1.0]
-triangle = [
-  -1.0, -1.0,  0.0,
-   1.0, -1.0,  0.0,
-   0.0,  1.0,  0.0]
+triangle, triColor, quads, qColor :: [GL.GLfloat]
+triColor = [
+  1.0, 1.0, 0.0, 1.0,
+  1.0, 0.0, 1.0, 1.0,
+  0.0, 1.0, 1.0, 1.0]
+triangle =
+  [ -1.0, -1.0,  0.0
+  ,  1.0, -1.0,  0.0
+  ,  0.0,  1.0,  0.0]
+qColor =
+  [ 1.0, 0.0, 1.0, 1.0
+  , 0.0, 1.0, 0.0, 1.0
+  , 1.0, 0.0, 1.0, 1.0
+  , 0.0, 1.0, 1.0, 1.0]
+quads =
+  [ -1.0, -1.0,  0.0
+  ,  1.0, -1.0,  0.0
+  ,  1.0,  1.0,  0.0
+  , -1.0,  1.0,  0.0
+  ]
+

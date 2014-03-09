@@ -4,9 +4,12 @@ in vec4 VertexColor;
 
 out vec4 Color;
 
+uniform vec3 TransMat;
+uniform mat4 ViewMat;
+
 void main() {
   Color = VertexColor;  
-  gl_Position = vec4(VertexPosition,1.0);
+  gl_Position = ViewMat * vec4(TransMat + VertexPosition,1.0);
 //   // gl_Position.w = 1.0;
 }
 
