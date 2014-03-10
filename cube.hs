@@ -26,7 +26,8 @@ main = do
     ----GL.clearColor GL.$= GL.Color4 0.05 0.05 0.05 1
     --GL.normalize  GL.$= GL.Enabled
     polygonSmooth $= Enabled
-    cullFace $= Just Front
+    --cullFace $= Just Front
+    cullFace $= Just Back 
     depthFunc $= Just Lequal
 
     -- init shaders
@@ -47,9 +48,10 @@ main = do
 
       bufferIndices cubeElem
 
-      --makeBuffer ArrayBuffer triColor 
-      --enableAttrib sp "VertexColor"
-      --setAttrib sp "VertexColor" ToFloat (VertexArrayDescriptor 4 Float 0 offset0)
+      makeBuffer ArrayBuffer qColor 
+      enableAttrib sp "VertexColor"
+      setAttrib sp "VertexColor" ToFloat (VertexArrayDescriptor 4 Float 0 offset0)
+
       return ()
 
     GL.currentProgram GL.$= Nothing
@@ -107,17 +109,16 @@ render _ shprg qvao deg = do
 
   let prjMat = projectionMatrix (deg2rad 60) 1.0 0.1 (10::GLfloat)
       cam = camMatrix $ dolly (V3 0 0 (4::GLfloat)) fpsCamera
-      --rotY r = V3 (V3 (cos r) 0 (sin r)) (V3 0 1 0) (V3 (-sin r) 0 (cos r))
-      rotX r = V3 (V3 1 0 0) (V3 0 (cos r) (-sin r)) (V3 0 (sin r) (cos r))
+      --rot r = V3 (V3 (cos r) 0 (sin r)) (V3 0 1 0) (V3 (-sin r) 0 (cos r)) -- rotY
+      rot r = V3 (V3 1 0 0) (V3 0 (cos r) (-sin r)) (V3 0 (sin r) (cos r)) -- rotX
       vUnifLoc = getUniform shprg "ViewMat"
       pUnifLoc = getUniform shprg "ProjMat"
       rUnifLoc = getUniform shprg "RotMat"
   asUniform cam vUnifLoc 
   asUniform prjMat pUnifLoc 
-  --asUniform (rotY (deg2rad (fromIntegral deg) ::GLfloat)) rUnifLoc
-  asUniform (rotX (deg2rad (fromIntegral deg) ::GLfloat)) rUnifLoc
+  asUniform (rot (deg2rad (fromIntegral deg) ::GLfloat)) rUnifLoc
  
-  withVAO qvao $ do
+  withVAO qvao $ 
     GL.drawElements GL.Quads (fromIntegral $ length cubeElem) UnsignedInt offset0
 
   GL.currentProgram GL.$= Nothing
@@ -127,8 +128,13 @@ cubeVert, qColor :: [GL.GLfloat]
 qColor =
   [ 1.0, 0.0, 1.0, 1.0
   , 0.0, 1.0, 0.0, 1.0
+  , 0.0, 1.0, 1.0, 1.0
+  , 0.0, 1.0, 0.0, 1.0
   , 1.0, 0.0, 1.0, 1.0
-  , 0.0, 1.0, 1.0, 1.0]
+  , 0.0, 1.0, 1.0, 1.0
+  , 1.0, 0.0, 1.0, 1.0
+  , 0.0, 1.0, 1.0, 1.0
+  ]
 cubeVert =
   [ -0.5, -0.5, -0.5
   ,  0.5, -0.5, -0.5
@@ -142,7 +148,7 @@ cubeVert =
 cubeElem :: [Word32]
 cubeElem =
   [ 0, 1, 2, 3
-  , 6, 5, 4, 7
+  , 4, 7, 6, 5
   , 4, 5, 3, 2
   , 6, 7, 1, 0
   , 5, 6, 0, 3

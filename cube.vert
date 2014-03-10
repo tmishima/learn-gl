@@ -1,6 +1,6 @@
 #version 130
 in vec3 VertexPosition;
-//in vec4 VertexColor;
+in vec4 VertexColor;
 
 out vec4 Color;
 
@@ -9,7 +9,7 @@ uniform mat4 ViewMat; //modelview_matrix
 uniform mat4 ProjMat; //projection_matrix
 
 void main() {
-  Color = vec4(1.0,1.0,1.0,1.0);  // VertexColor;  
+  Color = VertexColor;  
   gl_Position = ProjMat * ViewMat * vec4(RotMat * VertexPosition,1.0);
 }
 
