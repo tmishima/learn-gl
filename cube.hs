@@ -26,8 +26,7 @@ main = do
     ----GL.clearColor GL.$= GL.Color4 0.05 0.05 0.05 1
     --GL.normalize  GL.$= GL.Enabled
     polygonSmooth $= Enabled
-    --cullFace $= Just Front
-    cullFace $= Just Back 
+    cullFace $= Just Back  --Just Front
     depthFunc $= Just Lequal
 
     -- init shaders
