@@ -51,7 +51,7 @@ main = do
 
     GL.currentProgram GL.$= Nothing
 
-    run win $ render win sp qvao
+    run win (render win sp qvao) 0
 
   putStrLn "exiting"
 
@@ -84,30 +84,33 @@ keyCb win key _ st _ = do
 winCloseCb :: GLFW.WindowCloseCallback
 winCloseCb win = GLFW.setWindowShouldClose win True
 
-run :: GLFW.Window -> IO () -> IO ()
-run win draw = do
+run :: GLFW.Window -> (Int -> IO ()) -> Int -> IO ()
+run win draw deg = do
   GLFW.swapBuffers win
   GL.flush
   GLFW.pollEvents
 
   GL.clear [GL.ColorBuffer, GL.DepthBuffer]
-  draw
+  draw deg
 
   q <- GLFW.windowShouldClose win
-  unless q $ run win draw
+  unless q $ run win draw (deg + 1)
 
-render :: GLFW.Window -> ShaderProgram -> GL.VertexArrayObject -> IO ()
-render _ shprg qvao = do
+render :: GLFW.Window -> ShaderProgram -> GL.VertexArrayObject -> Int -> IO ()
+render _ shprg qvao deg = do
 
   GL.currentProgram GL.$= Just (program shprg)
   GL.clientState GL.VertexArray $= GL.Enabled
 
   let prjMat = projectionMatrix (deg2rad 60) 1.0 0.1 (10::GLfloat)
       cam = camMatrix $ dolly (V3 0 0 (4::GLfloat)) fpsCamera
+      rot r = V3 (V3 (cos r) 0 (sin r)) (V3 0 1 0) (V3 (-sin r) 0 (cos r))
       vUnifLoc = getUniform shprg "ViewMat"
       pUnifLoc = getUniform shprg "ProjMat"
+      rUnifLoc = getUniform shprg "RotMat"
   asUniform cam vUnifLoc 
   asUniform prjMat pUnifLoc 
+  asUniform (rot (deg2rad (fromIntegral deg) ::GLfloat)) rUnifLoc
  
   withVAO qvao $ do
     GL.drawElements GL.Quads (fromIntegral $ length cubeElem) UnsignedInt offset0
