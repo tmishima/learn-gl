@@ -25,6 +25,9 @@ main = do
     --GL.depthFunc  GL.$= Just GL.Less
     ----GL.clearColor GL.$= GL.Color4 0.05 0.05 0.05 1
     --GL.normalize  GL.$= GL.Enabled
+    polygonSmooth $= Enabled
+    cullFace $= Just Front
+    depthFunc $= Just Lequal
 
     -- init shaders
     sp <- simpleShaderProgramWith "cube.vert" "simple.frag" $ \ p -> do
@@ -104,13 +107,15 @@ render _ shprg qvao deg = do
 
   let prjMat = projectionMatrix (deg2rad 60) 1.0 0.1 (10::GLfloat)
       cam = camMatrix $ dolly (V3 0 0 (4::GLfloat)) fpsCamera
-      rot r = V3 (V3 (cos r) 0 (sin r)) (V3 0 1 0) (V3 (-sin r) 0 (cos r))
+      --rotY r = V3 (V3 (cos r) 0 (sin r)) (V3 0 1 0) (V3 (-sin r) 0 (cos r))
+      rotX r = V3 (V3 1 0 0) (V3 0 (cos r) (-sin r)) (V3 0 (sin r) (cos r))
       vUnifLoc = getUniform shprg "ViewMat"
       pUnifLoc = getUniform shprg "ProjMat"
       rUnifLoc = getUniform shprg "RotMat"
   asUniform cam vUnifLoc 
   asUniform prjMat pUnifLoc 
-  asUniform (rot (deg2rad (fromIntegral deg) ::GLfloat)) rUnifLoc
+  --asUniform (rotY (deg2rad (fromIntegral deg) ::GLfloat)) rUnifLoc
+  asUniform (rotX (deg2rad (fromIntegral deg) ::GLfloat)) rUnifLoc
  
   withVAO qvao $ do
     GL.drawElements GL.Quads (fromIntegral $ length cubeElem) UnsignedInt offset0
@@ -138,9 +143,9 @@ cubeElem :: [Word32]
 cubeElem =
   [ 0, 1, 2, 3
   , 6, 5, 4, 7
-  , 6, 5, 3, 0
   , 4, 5, 3, 2
-  , 7, 4, 2, 1
   , 6, 7, 1, 0
+  , 5, 6, 0, 3
+  , 7, 4, 2, 1
   ]
 
