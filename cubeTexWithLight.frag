@@ -8,6 +8,5 @@ out vec4 FragColor;
 uniform sampler2D Boxtex;
 
 void main(){
-  //FragColor = Color;
   FragColor = Color * (texture (Boxtex, TexCoord));
 }

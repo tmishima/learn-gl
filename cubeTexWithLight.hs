@@ -5,7 +5,6 @@ import qualified Graphics.UI.GLFW as GLFW
 import Graphics.GLUtil
 import Graphics.GLUtil.Camera3D
 import Linear
-import Linear.Matrix
 import qualified Numeric.Matrix as BFM
 
 main :: IO ()
@@ -19,10 +18,6 @@ main = do
     -- init gl
     GL.clearColor $= GL.Color4 0.5 0.5 0.5 1
 
-    --GL.position (GL.Light 0) GL.$= GL.Vertex4 5 5 10 0
-    --GL.light    (GL.Light 0) GL.$= GL.Enabled
-    --GL.lighting   GL.$= GL.Enabled
-    ----GL.clearColor GL.$= GL.Color4 0.05 0.05 0.05 1
     --GL.normalize  GL.$= GL.Enabled
     polygonSmooth $= Enabled
     cullFace $= Just Back  --Just Front
@@ -133,10 +128,10 @@ render _ shprg qvao tex deg = do
       --rot r = V3 (V3 (cos r) 0 (sin r)) (V3 0 1 0) (V3 (-sin r) 0 (cos r)) -- rotY
       rot r = V3 (V3 1 0 0) (V3 0 (cos r) (-sin r)) (V3 0 (sin r) (cos r)) -- rotX
       pvUnifLoc = getUniform shprg "ProjViewMat"
-      ipvUnifLoc = getUniform shprg "invProjViewMat"
+      --ipvUnifLoc = getUniform shprg "invProjViewMat"
       rUnifLoc = getUniform shprg "RotMat"
   asUniform pvMat pvUnifLoc 
-  asUniform invPvMat ipvUnifLoc
+  --asUniform invPvMat ipvUnifLoc
   asUniform (rot (deg2rad (fromIntegral deg) ::GLfloat)) rUnifLoc
   setUniform shprg "Boxtex" (TextureUnit 0)
  
@@ -147,9 +142,10 @@ render _ shprg qvao tex deg = do
   --return ()
   where
 
+invM44 :: M44 GLfloat -> M44 GLfloat
 invM44 (V4 va vb vc vd) = case im of
-    Just [la, lb, lc, ld] -> (V4 (l2v la) (l2v lb) (l2v lc) (l2v ld)) :: M44 GLfloat
-    Nothing -> eye4 
+    Just [la, lb, lc, ld] -> V4 (l2v la) (l2v lb) (l2v lc) (l2v ld)
+    Nothing -> eye4 -- 逆行列が存在しない場合
   where
     im = fmap BFM.toList $ BFM.inv $ BFM.fromList ([ v2l va, v2l vb, v2l vc, v2l vd] :: [[Float]])
     v2l (V4 a b c d) = [realToFrac a,realToFrac b,realToFrac c,realToFrac d]
