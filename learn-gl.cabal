@@ -40,3 +40,17 @@ executable cube
     GLUtil -any ,
     linear -any
 
+executable cubeTexWithLight
+  default-language: Haskell2010
+  main-is: cubeTexWithLight.hs
+  ghc-options: -Wall
+  build-depends:
+    OpenGL >= 2.9,
+    GLFW-b >= 1.3,
+    base < 5,
+    array >= 0.4,
+    bytestring >= 0.10,
+    GLUtil -any ,
+    linear -any ,
+    bed-and-breakfast -any
+
