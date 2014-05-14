@@ -8,8 +8,7 @@ in vec4 ShadowCoord;
 out vec4 FragColor;
 
 uniform sampler2DShadow ShadowMap;
-
-uniform int shadowSW;
+//uniform sampler2D ShadowMap;
 
 uniform vec3 LightPosition = vec3 (0,10,0);
 uniform float MaterialShininess = 0.5;
@@ -33,18 +32,28 @@ vec3 phongModelDiffAndSpec()
 
 void main()
 {
-  if (shadowSW == 0) 
-  {
-    //FragColor = vec4(0.0,1.0,0.0,1.0);  // Color;
-  }
-  else
-  {
-    vec3 ambient = vec3 (0.2,0.2,0.2);
-    vec3 diffAndSpec = phongModelDiffAndSpec();
+  vec3 ambient = vec3 (0.2,0.2,0.2);
+  //vec3 diffAndSpec = phongModelDiffAndSpec();
+  vec3 diffAndSpec = vec3 (0.8,0.8,0.8);
 
-    float shadow = textureProj(ShadowMap, ShadowCoord);
-    FragColor = vec4(diffAndSpec * shadow + ambient, 1.0);
-    //FragColor = vec4(1.0,0.0,0.0,1.0);  // Color;
+  float shadow = textureProj(ShadowMap, ShadowCoord);
+  if( shadow < ShadowCoord.x )
+  {
+    //FragColor = vec4(diffAndSpec * shadow + ambient, 1.0);
+    FragColor = vec4(diffAndSpec + ambient, 1.0);
   }
+  else{
+    FragColor = vec4(0.0,0.0,0.0, 1.0);
+  }
+  
+  //if( textureProj(ShadowMap, ShadowCoord) < ShadowCoord.z)
+  //{
+  //  FragColor = vec4(1.0,1.0,1.0,1.0);
+  //}
+  //else{
+  //  FragColor = vec4(0.0,0.0,0.0,1.0);
+  //}
+  //FragColor = shadow2DProj (ShadowMap, ShadowCoord);
 }
+
 

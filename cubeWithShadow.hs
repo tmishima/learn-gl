@@ -35,8 +35,6 @@ main = do
     -- init shaders
     sp <- simpleShaderProgramWith "shadow.vert" "shadow.frag" $ \ p -> do
       attribLocation p "VertexPosition" $= AttribLocation 0
-      attribLocation p "VertexNormal" $= AttribLocation 1
-      bindFragDataLocation p "FragColor" $= 0
 
     GL.currentProgram GL.$= Just (program sp)
     pLog <- GL.get $ GL.programInfoLog (program sp)
@@ -49,10 +47,6 @@ main = do
       enableAttrib sp "VertexPosition"
       setAttrib sp "VertexPosition" ToFloat (VertexArrayDescriptor 3 Float 0 offset0)
 
-      makeBuffer ArrayBuffer cubeNormal
-      enableAttrib sp "VertexNormal"
-      setAttrib sp "VertexNormal" ToFloat (VertexArrayDescriptor 3 Float 0 offset0)
-
       return ()
 
     pvao <- makeVAO $ do
@@ -61,15 +55,43 @@ main = do
       enableAttrib sp "VertexPosition"
       setAttrib sp "VertexPosition" ToFloat (VertexArrayDescriptor 3 Float 0 offset0)
 
+    spR <- simpleShaderProgramWith "shadowR.vert" "shadowR.frag"
+             $ \ p -> do
+      attribLocation p "VertexPosition" $= AttribLocation 0
+      attribLocation p "VertexNormal" $= AttribLocation 1
+      bindFragDataLocation p "FragColor" $= 0
+    pLogR <- GL.get $ GL.programInfoLog (program spR)
+    putStrLn pLogR
+
+    GL.currentProgram GL.$= Just (program spR)
+    -- load objects
+    qvaoR <- makeVAO $ do
+      print "make cube Vao"
+      makeBuffer ArrayBuffer cubeVert
+      enableAttrib spR "VertexPosition"
+      setAttrib spR "VertexPosition" ToFloat (VertexArrayDescriptor 3 Float 0 offset0)
+
+      makeBuffer ArrayBuffer cubeNormal
+      enableAttrib spR "VertexNormal"
+      setAttrib spR "VertexNormal" ToFloat (VertexArrayDescriptor 3 Float 0 offset0)
+
+      return ()
+
+    pvaoR <- makeVAO $ do
+      print "make plate Vao"
+      makeBuffer ArrayBuffer plateVert
+      enableAttrib spR "VertexPosition"
+      setAttrib spR "VertexPosition" ToFloat (VertexArrayDescriptor 3 Float 0 offset0)
+
       makeBuffer ArrayBuffer plateNorm
-      enableAttrib sp "VertexNormal"
-      setAttrib sp "VertexNormal" ToFloat (VertexArrayDescriptor 3 Float 0 offset0)
+      enableAttrib spR "VertexNormal"
+      setAttrib spR "VertexNormal" ToFloat (VertexArrayDescriptor 3 Float 0 offset0)
 
     GL.currentProgram GL.$= Nothing
 
     (tbo,fbo) <- makeShadowBuff
 
-    run win (render win sp qvao pvao (tbo,fbo)) 0
+    run win (render win (sp,spR) (qvao,qvaoR) (pvao,pvaoR) (tbo,fbo)) 0
 
   putStrLn "exiting"
 
@@ -114,44 +136,30 @@ run win draw deg = do
   q <- GLFW.windowShouldClose win
   unless q $ run win draw (deg + 1)
 
-render :: GLFW.Window -> ShaderProgram -> GL.VertexArrayObject
-       -> GL.VertexArrayObject
-       -> (TextureObject,FramebufferObject) -> Int -> IO ()
-render _ shprg qvao pvao (tbo,fbo) deg = do
+--  uniformScalar swUnifLoc $= (0::GLint)
 
+render :: GLFW.Window -> (ShaderProgram,ShaderProgram)
+       -> (GL.VertexArrayObject, GL.VertexArrayObject)
+       -> (GL.VertexArrayObject, GL.VertexArrayObject)
+       -> (TextureObject,FramebufferObject) -> Int -> IO ()
+render _ (shprg,shprgR) (qvao,qvaoR) (pvao,pvaoR) (tbo,fbo) deg = do
+
+  -- shadow
   GL.currentProgram GL.$= Just (program shprg)
   GL.clientState GL.VertexArray $= GL.Enabled
 
-
-  let prjMat = projectionMatrix (deg2rad 60) 1.0 0.1 (50::GLfloat)
-      cam = camMatrix $ dolly (V3 0 0 (10::GLfloat)) fpsCamera
-      --rot r = V3 (V3 (cos r) 0 (sin r)) (V3 0 1 0) (V3 (-sin r) 0 (cos r)) -- rotY
-      --rot r = V3 (V3 1 0 0) (V3 0 (cos r) (-sin r)) (V3 0 (sin r) (cos r)) -- rotX
-      vUnifLoc = getUniform shprg "ViewMat"
-      pUnifLoc = getUniform shprg "ProjMat"
-      rUnifLoc = getUniform shprg "RotMat"
-      -- for Shadow
-      --mvUnifLoc = getUniform shprg "ModelViewMatrix"
-      nrUnifLoc = getUniform shprg "NormalMatrix"
-      sdUnifLoc = getUniform shprg "ShadowMatrix"
-      swUnifLoc = getUniform shprg "shadowSW"
-      --
-
-  --asUniform (rot (deg2rad (fromIntegral deg) ::GLfloat)) rUnifLoc
-
-  let sprjMat = projectionMatrix (deg2rad 60) 1.0 0.1 (20::GLfloat)
-      sun = camMatrix $ tilt (-90) $ dolly (V3 0 (10::GLfloat) 0) fpsCamera
-      --sun = camMatrix $ dolly (V3 0 10 (0::GLfloat)) fpsCamera
-
-  --asUniform sun mvUnifLoc 
-  asUniform (sprjMat !*! sun)  sdUnifLoc
-  asUniform (V3 (V3 0 1 0) (V3 0 1 0) (V3 0 1 (0::GLfloat))) nrUnifLoc
-
-  -- shadow
-  viewport $= (Position 0 0, Size 512 512)
-  GL.clear [GL.ColorBuffer, GL.DepthBuffer]
-  uniformScalar swUnifLoc $= (0::GLint)
   bindFramebuffer Framebuffer $= fbo
+
+  cullFace $= Just Front 
+  let dpMat = projectionMatrix (deg2rad 90) 1.0 0.1 (50::GLfloat)
+      dvMat = camMatrix $ tilt (-90::GLfloat)
+                        $ dolly (V3 0 5 (0::GLfloat)) fpsCamera
+      mvpMUnifLoc = getUniform shprg "mvpMatrix"
+
+  asUniform (dpMat !*! dvMat) mvpMUnifLoc
+
+  --viewport $= (Position 0 0, Size 512 512)
+  GL.clear [GL.ColorBuffer, GL.DepthBuffer]
 
   withVAO qvao $ 
     drawArrays Quads 0 $ fromIntegral $ length cubeVert
@@ -160,24 +168,41 @@ render _ shprg qvao pvao (tbo,fbo) deg = do
     drawArrays Quads 0 $ fromIntegral $ length plateVert
 
   -- View
-  viewport $= (Position 0 0, Size 640 480)
-  asUniform cam vUnifLoc 
-  --asUniform sun vUnifLoc 
-  asUniform prjMat pUnifLoc 
-  --asUniform sprjMat pUnifLoc 
-  asUniform (V3 (V3 1 0 0) (V3 0 1 0) (V3 0 0 (1::GLfloat))) rUnifLoc
-
-  GL.clear [GL.ColorBuffer, GL.DepthBuffer]
-  uniformScalar swUnifLoc $= (1::GLint)
   bindFramebuffer Framebuffer $= defaultFramebufferObject
+  GL.currentProgram GL.$= Just (program shprgR)
+
+  let pMat = projectionMatrix (deg2rad 60) 1.0 0.1 (20::GLfloat)
+      vMat = camMatrix $ tilt (-20)
+                       $ dolly (V3 0 1 (10::GLfloat)) fpsCamera
+      bMat = V4 (V4 0.5 0.0 0.0 0.5)
+                (V4 0.0 0.5 0.0 0.5)
+                (V4 0.0 0.0 0.5 0.5)
+                (V4 0.0 0.0 0.0 1.0)
+      mMat = V4 (V4 1.0 0.0 0.0 0.0)
+                (V4 0.0 1.0 0.0 0.0)
+                (V4 0.0 0.0 1.0 0.0)
+                (V4 0.0 0.0 0.0 1.0)
+      mMRUnifLoc = getUniform shprgR "mMatrix"
+      tMRUnifLoc = getUniform shprgR "tMatrix"
+      mvpMRUnifLoc = getUniform shprgR "mvpMatrix"
+      mvpMat = pMat !*! vMat !*! mMat
+      tMat = bMat !*! dpMat !*! dvMat !*! mMat
+ 
+  asUniform mvpMat mvpMRUnifLoc
+  --asUniform mMat mMRUnifLoc
+  asUniform tMat tMRUnifLoc
+
+  --viewport $= (Position 0 0, Size 640 480)
+  cullFace $= Just Back  --Just Front Just FrontAndBack -- 
+  GL.clear [GL.ColorBuffer, GL.DepthBuffer]
 
   activeTexture $= TextureUnit 0
   textureBinding Texture2D $= Just tbo 
 
-  withVAO qvao $ 
+  withVAO qvaoR $ 
     drawArrays Quads 0 $ fromIntegral $ length cubeVert
 
-  withVAO pvao $ 
+  withVAO pvaoR $ 
     drawArrays Quads 0 $ fromIntegral $ length plateVert
   
   GL.currentProgram GL.$= Nothing
@@ -205,7 +230,7 @@ makeShadowBuff = do
   f <- genObjectName :: IO FramebufferObject
   bindFramebuffer Framebuffer $= f
   framebufferTexture2D Framebuffer DepthAttachment Texture2D b 0
-  drawBuffers $= [NoBuffers]
+  --drawBuffers $= [NoBuffers]
 
   bindFramebuffer Framebuffer $= defaultFramebufferObject
 
